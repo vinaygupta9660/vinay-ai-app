@@ -7,7 +7,7 @@ st.title("🤖 Vinaygupta9660 AI")
 st.subheader("Aapka Personal Assistant")
 
 # API aur AI Setup
-API_KEY = "AQ.Ab8RN6L64uH1alLJFK8xQlVknHjC4LTUHqgFWrfC8khTnIoYgw" 
+API_KEY = "AQ.Ab8RN6LvE2S87Ym6nVDk-gBtq2Mcfn8KlFvrKKQkTitbn27WLQ" 
 genai.configure(api_key=API_KEY)
 
 model = genai.GenerativeModel(
