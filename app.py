@@ -7,7 +7,7 @@ st.title("🤖 Vinaygupta9660 AI")
 st.subheader("Aapka Personal Assistant")
 
 # Yahan double quotes ke andar apni AQ... wali key daalein
-API_KEY = "YAHAN_APNI_AQ_WALI_KEY_PASTE_KAREIN"
+API_KEY = ""AQ.Ab8RN6K4iNx-eGVHsqz52C5xNuXhlDaS9CCQNdmKGqDGTxusQw""
 
 # Client aur Chat dono ko memory mein save karenge taaki connection close na ho
 if "client" not in st.session_state:
