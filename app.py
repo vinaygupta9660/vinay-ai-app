@@ -7,15 +7,15 @@ st.title("🤖 Vinaygupta9660 AI")
 st.subheader("Aapka Personal Assistant")
 
 # Yahan double quotes ke andar apni AQ... wali key daalein
-API_KEY = "AQ.Ab8RN6L2Xj0r_sqJ81fG3BsCzWSzhSxKeKsJQ98jtZdKOCgh0A"
-client = genai.Client(api_key=API_KEY)
+API_KEY = "YAHAN_APNI_AQ_WALI_KEY_PASTE_KAREIN"
 
-# Chat session setup
-if "chat_session" not in st.session_state:
-    st.session_state.chat_session = client.chats.create(
+# Client aur Chat dono ko memory mein save karenge taaki connection close na ho
+if "client" not in st.session_state:
+    st.session_state.client = genai.Client(api_key=API_KEY)
+    st.session_state.chat_session = st.session_state.client.chats.create(
         model="gemini-3.6-flash",
         config=genai.types.GenerateContentConfig(
-            system_instruction="Tumhara naam 'Vinaygupta9660 AI' hai. Tumhe Vinay ne develop kiya hai aur tum Vinay ke personal assistant ho."
+            system_instruction="Tumhara naam 'Vinaygupta9660 AI' hai. Tum Google ya Gemini nahi ho. Tumhe Vinay ne develop kiya hai aur tum Vinay ke personal assistant ho. Jab bhi koi tumhara naam pooche, toh yahi batana."
         )
     )
     st.session_state.messages = []
