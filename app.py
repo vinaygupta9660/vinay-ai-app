@@ -1,43 +1,40 @@
 import streamlit as st
-import google.generativeai as genai
+from google import genai
 
 # App ka Title aur Design
 st.set_page_config(page_title="Vinaygupta9660 AI", page_icon="🤖")
 st.title("🤖 Vinaygupta9660 AI")
 st.subheader("Aapka Personal Assistant")
 
-# API aur AI Setup
-API_KEY = "AQ.Ab8RN6LvE2S87Ym6nVDk-gBtq2Mcfn8KlFvrKKQkTitbn27WLQ" 
-genai.configure(api_key=API_KEY)
+# Yahan double quotes ke andar apni AQ... wali key daalein
+API_KEY = "YAHAN_APNI_AQ_WALI_KEY_PASTE_KAREIN"
+client = genai.Client(api_key=API_KEY)
 
-model = genai.GenerativeModel(
-    'gemini-3.6-flash',
-    system_instruction="Tumhara naam 'Vinaygupta9660 AI' hai. Tum Google ya Gemini nahi ho. Tumhe Vinay ne develop kiya hai aur tum Vinay ke personal assistant ho. Jab bhi koi tumhara naam pooche, toh yahi batana."
-)
-
-# Chat History save rakhne ka code (Memory)
-if "messages" not in st.session_state:
+# Chat session setup
+if "chat_session" not in st.session_state:
+    st.session_state.chat_session = client.chats.create(
+        model="gemini-3.6-flash",
+        config=genai.types.GenerateContentConfig(
+            system_instruction="Tumhara naam 'Vinaygupta9660 AI' hai. Tumhe Vinay ne develop kiya hai aur tum Vinay ke personal assistant ho."
+        )
+    )
     st.session_state.messages = []
 
-# Purani baatein screen par dikhana
+# Purane messages dikhana
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
+        st.markdown(msg["text"])
 
-# Chat Box jahan aap type karenge
-sawal = st.chat_input("Apna sawaal yahan likhein...")
-
-if sawal:
-    # Aapka sawaal screen par dikhana
+# Naya message bhejna
+if prompt := st.chat_input("Apna sawaal yahan likhein..."):
     with st.chat_message("user"):
-        st.markdown(sawal)
-    st.session_state.messages.append({"role": "user", "content": sawal})
-    
-    # AI se jawab mangna
-    try:
-        jawab = model.generate_content(sawal)
-        with st.chat_message("assistant"):
-            st.markdown(jawab.text)
-        st.session_state.messages.append({"role": "assistant", "content": jawab.text})
-    except Exception as e:
-        st.error("Kuch gadbad hui: " + str(e))
+        st.markdown(prompt)
+    st.session_state.messages.append({"role": "user", "text": prompt})
+
+    with st.chat_message("model"):
+        try:
+            response = st.session_state.chat_session.send_message(prompt)
+            st.markdown(response.text)
+            st.session_state.messages.append({"role": "model", "text": response.text})
+        except Exception as e:
+            st.error(f"Error: {e}")
