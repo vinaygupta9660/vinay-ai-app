@@ -7,7 +7,7 @@ st.title("🤖 Vinaygupta9660 AI")
 st.subheader("Aapka Personal Assistant")
 
 # Yahan double quotes ke andar apni AQ... wali key daalein
-API_KEY = "YAHAN_APNI_AQ_WALI_KEY_PASTE_KAREIN"
+API_KEY = "AQ.Ab8RN6L2Xj0r_sqJ81fG3BsCzWSzhSxKeKsJQ98jtZdKOCgh0A"
 client = genai.Client(api_key=API_KEY)
 
 # Chat session setup
