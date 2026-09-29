@@ -1,80 +1,193 @@
+import os
+import time
+import base64
 import streamlit as st
 from google import genai
-from PIL import Image
-import os
+from google.genai import types
 
-# Page setup
-st.set_page_config(page_title="विनय का AI", page_icon="🤖")
-ai_name = "vinay9660"
-st.title(f"🤖 {ai_name} - आपका अपना AI")
-st.write("नमस्ते! मैं आपका नया AI असिस्टेंट हूँ।")
+# 1. Page Configuration
+st.set_page_config(
+    page_title="Vinay AI Assistant",
+    page_icon="🤖",
+    layout="centered"
+)
 
-# API Key aur GenAI client setup
-try:
-    my_api_key = st.secrets["GEMINI_API_KEY"]
-    client = genai.Client(api_key=my_api_key)
-except Exception as e:
-    st.error(f"असली एरर यह है: {e}")
+# Logo detect logic
+logo_path = None
+for name in ["logo.png.jpg", "logo.png", "logo.jpg", "logo.jpeg"]:
+    if os.path.exists(name):
+        logo_path = name
+        break
+
+# Convert logo to base64
+def get_base64_image(image_path):
+    if image_path and os.path.exists(image_path):
+        with open(image_path, "rb") as img_file:
+            return base64.b64encode(img_file.read()).decode()
+    return None
+
+logo_b64 = get_base64_image(logo_path)
+
+# Custom Styling
+st.markdown("""
+<style>
+    .top-nav {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 0px 16px 0px;
+        border-bottom: 1px solid rgba(128, 128, 128, 0.15);
+        margin-bottom: 25px;
+    }
+    .top-nav img {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+    }
+    .top-nav-title {
+        font-size: 1.15rem;
+        font-weight: 700;
+        margin: 0;
+    }
+    .hero-container {
+        text-align: center;
+        margin-top: 35px;
+        margin-bottom: 30px;
+    }
+    .hero-logo {
+        width: 76px;
+        height: 76px;
+        border-radius: 18px;
+        margin-bottom: 15px;
+    }
+    .hero-title {
+        font-size: 1.85rem;
+        font-weight: 700;
+        margin-bottom: 6px;
+    }
+    .hero-sub {
+        color: #71767b;
+        font-size: 0.95rem;
+    }
+    .sidebar-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+    .sidebar-brand img {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+    }
+    .sidebar-brand span {
+        font-weight: 600;
+        font-size: 1.05rem;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+# 2. API Key Setup
+api_key = st.secrets.get("GEMINI_API_KEY")
+if not api_key:
+    st.error("API Key नहीं मिली! कृपया `.streamlit/secrets.toml` में GEMINI_API_KEY सेट करें।")
     st.stop()
 
-# 1. Chat History ke liye Memory banana
+client = genai.Client(api_key=api_key)
+
+# 3. Session State for Chat Memory
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Purane messages ko screen par dikhana
+# 4. Sidebar
+with st.sidebar:
+    if logo_b64:
+        st.markdown(f"""
+        <div class="sidebar-brand">
+            <img src="data:image/jpeg;base64,{logo_b64}">
+            <span>Vinay AI</span>
+        </div>
+        """, unsafe_allow_html=True)
+    st.subheader("⚙️ Settings")
+    if st.button("🗑️ Clear Chat History", key="clear_chat_sidebar_btn", use_container_width=True):
+        st.session_state.messages = []
+        st.rerun()
+
+# 5. Top Bar
+if logo_b64:
+    st.markdown(f"""
+    <div class="top-nav">
+        <img src="data:image/jpeg;base64,{logo_b64}">
+        <span class="top-nav-title">Vinay AI</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+# 6. Hero Screen
+if len(st.session_state.messages) == 0:
+    logo_img_tag = f'<img class="hero-logo" src="data:image/jpeg;base64,{logo_b64}">' if logo_b64 else '🤖'
+    st.markdown(f"""
+    <div class="hero-container">
+        {logo_img_tag}
+        <div class="hero-title">आज मैं आपकी क्या मदद कर सकता हूँ?</div>
+        <p class="hero-sub">आपका पर्सनल AI असिस्टेंट</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    col_a, col_b = st.columns(2)
+    with col_a:
+        if st.button("💡 Business Idea बताओ", key="btn_starter_biz", use_container_width=True):
+            st.session_state.messages.append({"role": "user", "content": "एक नया और अच्छा business idea बताओ"})
+            st.rerun()
+    with col_b:
+        if st.button("🐍 Python Script लिखो", key="btn_starter_py", use_container_width=True):
+            st.session_state.messages.append({"role": "user", "content": "Python में एक useful automation script लिखो"})
+            st.rerun()
+
+# 7. Avatar Setup
+assistant_avatar = logo_path if logo_path else "🤖"
+
+# 8. Render All Previous History
 for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
+    avatar = "👤" if msg["role"] == "user" else assistant_avatar
+    with st.chat_message(msg["role"], avatar=avatar):
         st.markdown(msg["content"])
 
-# 2. Sidebar me Image Upload ka feature
-with st.sidebar:
-    st.header("⚙️ Extra Features")
-    st.write("Yahan aap photo upload karke AI se uske baare me pooch sakte hain.")
-    uploaded_image = st.file_uploader("Photo upload karein (Optional)", type=["png", "jpg", "jpeg"])
-    
-    image = None
-    if uploaded_image:
-        image = Image.open(uploaded_image)
-        st.image(image, caption="Aapki Upload ki gayi photo", use_container_width=True)
-
-# 3. Chat Input aur AI Response
-user_input = st.chat_input("Apna sawaal yahan likhein:")
+# 9. Handle New Input (Defining need_reply)
+user_input = st.chat_input("मुझसे कुछ भी पूछें...")
+need_reply = False
 
 if user_input:
-    # User ka message screen par dikhana aur memory me save karna
-    st.chat_message("user").markdown(user_input)
     st.session_state.messages.append({"role": "user", "content": user_input})
+    with st.chat_message("user", avatar="👤"):
+        st.markdown(user_input)
+    need_reply = True
+elif len(st.session_state.messages) > 0 and st.session_state.messages[-1]["role"] == "user":
+    need_reply = True
 
-    # AI se response lena
-    try:
-        with st.spinner("Soch raha hoon..."):
-            # Agar image upload hui hai, toh text aur image dono AI ko bhejein
-            if image:
-                contents = [user_input, image]
-            else:
-                contents = [user_input]
+# 10. Generate AI Response
+if need_reply:
+    chat_contents = []
+    for m in st.session_state.messages:
+        role = "user" if m["role"] == "user" else "model"
+        chat_contents.append(
+            types.Content(
+                role=role,
+                parts=[types.Part.from_text(text=m["content"])]
+            )
+        )
 
-# System Prompt
-system_prompt = f"तुम्हारा नाम {ai_name} है। तुम्हें विनय ने बनाया है। अगर कोई भी तुमसे पूछे कि तुम्हें किसने बनाया है या तुम किसके AI हो, तो तुम्हें साफ-साफ बताना है कि 'मुझे विनय ने बनाया है'।"
-
-user_question = st.text_input("अपना सवाल यहाँ लिखें:")
-
-if st.button("जवाब खोजें 🚀"):
-    if user_question:
+    with st.chat_message("assistant", avatar=assistant_avatar):
         with st.spinner("सोच रहा हूँ..."):
             try:
                 response = client.models.generate_content(
-                    model='gemini-3.6-flash',
-                    contents=user_question,
+                    model="gemini-3.6-flash",
+                    contents=chat_contents,
                     config=types.GenerateContentConfig(
-                        system_instruction=system_prompt,
+                        system_instruction="You are Vinay AI, an intelligent, helpful, and polite assistant. Reply clearly in the user's language."
                     )
                 )
-                
-                st.success("जवाब:")
-                st.write(response.text)
-            except Exception as e:
-                st.error(f"AI का एरर: {e}")
-    else:
-        st.warning("कृपया पहले कोई सवाल टाइप करें!")
-        
+                assistant_reply = response.text
+                st.markdown(assistant_reply)
+                st.session_state.messages.append({"role": "assistant", "content": assistant_reply})
+            except Exception as err:
+                st.error(f"Request Error: {err}")
